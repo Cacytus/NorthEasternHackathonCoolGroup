@@ -9,7 +9,7 @@ from torchvision import models, transforms
 import cv2
 from datetime import datetime
 import fiftyone as fo
-import fiftyone.zoo as foz
+from fiftyone.utils.huggingface import load_from_hub
 from sklearn.model_selection import train_test_split
 import json
 import matplotlib.pyplot as plt
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 class Config:
-    DATABASE_NAME = "Voxel51/GMNCSA24-FO"
+    DATASET_HUB_PATH = "Voxel51/GMNCSA24-FO"
     BATCH_SIZE = 16
     NUM_EPOCHS = 20
     LEARNING_RATE = 0.001
@@ -104,11 +104,15 @@ class ActivityDetector(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# Function to connect to FiftyOne and load the dataset
+# Function to load the dataset from Hugging Face Hub
 def load_dataset():
     try:
-        logger.info(f"Connecting to FiftyOne database: {Config.DATABASE_NAME}")
-        dataset = fo.load_dataset(Config.DATABASE_NAME)
+        logger.info(f"Loading dataset from Hugging Face Hub: {Config.DATASET_HUB_PATH}")
+        dataset = load_from_hub(Config.DATASET_HUB_PATH)
+        
+        # Launch FiftyOne app session for visualization (comment out for headless environments)
+        session = fo.launch_app(dataset)
+        
         logger.info(f"Successfully loaded dataset with {len(dataset)} samples")
         return dataset
     except Exception as e:
@@ -411,7 +415,7 @@ def test_fall_detection(video_path=None):
 def main():
     logger.info("Starting activity and fall detection training pipeline")
     
-    # Load dataset
+    # Load dataset from Hugging Face Hub
     dataset = load_dataset()
     
     # Prepare data for training
